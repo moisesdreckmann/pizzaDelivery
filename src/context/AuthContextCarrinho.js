@@ -11,6 +11,12 @@ export const AuthUserProvider = ({ children }) => {
 
   const removerDoCarrinho = (index) => {
     setCarrinho(prevCarrinho => {
+      if (index === undefined) {
+        // Se index não for fornecido, limpa todos os itens do carrinho
+        return [];
+      }
+
+      // Remove o item específico
       const novoCarrinho = [...prevCarrinho];
       novoCarrinho.splice(index, 1);
       return novoCarrinho;
@@ -23,3 +29,4 @@ export const AuthUserProvider = ({ children }) => {
     </AuthUserContext.Provider>
   );
 };
+

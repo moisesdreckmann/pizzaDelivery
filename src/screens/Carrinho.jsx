@@ -4,6 +4,8 @@ import { AuthUserContext } from '../context/AuthContextCarrinho.js';
 import logo from '../assets/logo.png';
 import ItemCarrinho from '../components/ItemCarrinho';
 import Icon from 'react-native-vector-icons/MaterialIcons.js';
+import firestore from '@react-native-firebase/firestore';
+import { firebase } from '@react-native-firebase/auth';
 
 function Carrinho() {
   const { carrinho, removerDoCarrinho } = useContext(AuthUserContext);
@@ -14,13 +16,34 @@ function Carrinho() {
     removerDoCarrinho(index);
   };
 
-  const handleComprar = () => {
-    carrinho.splice(0, carrinho.length);
+  const handleComprar = async () => {
+    const userId = firebase.auth().currentUser.uid;
 
-    setMensagem('Oba! Seu pedido está sendo preparado e você pode retirar em 40 minutos');
-    setTimeout(() => {
-      setMensagem('');
-    }, 10000);
+    const compras = carrinho.map(item => ({
+      nome: item.nome,
+      preco: item.preco,
+      imagem: item.imagem,
+      quantidade: item.quantidade || 1
+    }));
+
+    try {
+      await firestore().collection('Compras').add({
+        userId: userId,
+        itens: compras,
+        total: total.toFixed(2),
+        data: new Date().toISOString()
+      });
+
+      // Limpe o carrinho
+      removerDoCarrinho(); // Chame sem parâmetros para limpar todos os itens
+      
+      setMensagem('Oba! Seu pedido está sendo preparado e você pode retirar em 40 minutos');
+      setTimeout(() => {
+        setMensagem('');
+      }, 10000);
+    } catch (error) {
+      console.error('Erro ao registrar compra:', error);
+    }
   };
 
   return (
@@ -28,7 +51,6 @@ function Carrinho() {
       <Image source={logo} style={styles.logo} resizeMode="cover" />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollView}>
-          
           {carrinho.length === 0 && mensagem === '' ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>Não há itens no carrinho</Text>
