@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { ScrollView, Image, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { AuthUserContext } from '../context/AuthContextCarrinho.js';
 import logo from '../assets/logo.png';
@@ -6,11 +6,24 @@ import ItemCarrinho from '../components/ItemCarrinho';
 import Icon from 'react-native-vector-icons/MaterialIcons.js';
 import firestore from '@react-native-firebase/firestore';
 import { firebase } from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function Carrinho() {
   const { carrinho, removerDoCarrinho } = useContext(AuthUserContext);
   const [mensagem, setMensagem] = useState('');
+  const [email, setEmail] = useState('');
   let total = 0;
+
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      if (storedEmail) {
+        setEmail(storedEmail);
+      }
+    };
+
+    fetchEmail();
+  }, []);
 
   const handleRemoverItem = (index) => {
     removerDoCarrinho(index);
@@ -29,6 +42,7 @@ function Carrinho() {
     try {
       await firestore().collection('Compras').add({
         userId: userId,
+        email: email,
         itens: compras,
         total: total.toFixed(2),
         data: new Date().toISOString()
@@ -89,7 +103,6 @@ function Carrinho() {
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -158,7 +171,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     marginHorizontal: 35,
     borderRadius: 4,
-
   }
 });
 
